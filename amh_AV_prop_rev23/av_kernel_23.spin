@@ -14,7 +14,7 @@ AVversion         =              23                      'Spring 2016
 '------------------------------------Propeller Cog Usage---------------------------------------Langauge---------
                                 '(0) Setup / Interpreter                                        (SPIN)
                                 '1 FREE COG
-                                '2 FREE COG
+LJUS_Cog        = 2             'Left Justified DAC Driver                                      (ML)
 sd0_Cog         = 3             'SD File System for SFX                                         (ML)
 audioDACCog     = 4             'Machine language DAC Audio Player                              (ML)
 Graphic_Cog     = 5             'Runs video, score display, etc                                 (SPIN)
@@ -67,6 +67,7 @@ loadScreen      =               %0100_0000
 
 VAR     'Display buffer data, SD card read buffer data, audio buffers
  
+  long audioDacSamples[2]
   long audioBuffer[1280]                                '1K buffer per stereo channel
   byte bufferD[4096]                                    'Lower 2K is frame buffer, upper 2K is what is put on display 
   byte dataBlock0[512]                                  'For reading sectors off SD card
@@ -230,6 +231,7 @@ OBJ
   sd0           :               "SD_Engine_0"                             'SD Card Reader 0 (AUDIO)
   dmd           :               "dmd_IO_driver_128x32_16shade"            'DMD driver
   audio         :               "roy_DAC_4"                               'NEW DAC engine for Audio
+  ljus          :               "LJUS_DAC"                                'Left Justified engine for Audio
 
   serial        :               "FullDuplexSerial"    
 
@@ -255,13 +257,14 @@ PUB AVKernel | g
 
   Blink(2, 50)
 
-  audio.DACEngineStart(@audioBuffer, 14, 15, 22050, audioDACCog)
+  audio.DACEngineStart(@audioBuffer, 14, 15, 22050, @audioDacSamples, audioDACCog)
 
   setVolume(0, 80, 80)
   setVolume(1, 80, 80)
   setVolume(2, 80, 80)
   setVolume(3, 35, 35)
 
+  ljus.LJUSStart(@audioDacSamples, 22050, LJUS_Cog)
 
 {----------------- Begin Main Loop ---------------------------------------}  
 
